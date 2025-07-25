@@ -22,6 +22,8 @@ import AdminCourses from "./admin/Courses/AdminCourses";
 import AdminUsers from "./admin/Users/AdminUsers";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+import VoiceModeController from './components/VoiceModeController';
+
 
 const App = () => {
   const { isAuth, user, loading } = UserData();
@@ -32,6 +34,7 @@ const App = () => {
       ) : (
         <BrowserRouter>
           <Header isAuth={isAuth} />
+           <VoiceModeController />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
@@ -90,6 +93,7 @@ const App = () => {
               element={isAuth ? <AdminUsers user={user} /> : <Login />}
             />
           </Routes>
+         
           <Footer />
         </BrowserRouter>
       )}
