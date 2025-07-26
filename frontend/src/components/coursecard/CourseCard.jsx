@@ -13,22 +13,23 @@ const CourseCard = ({ course }) => {
 
   const { fetchCourses } = CourseData();
 
-  const deleteHandler = async (id) => {
-    if (confirm("Are you sure you want to delete this course")) {
-      try {
-        const { data } = await axios.delete(`${server}/api/course/${id}`, {
-          headers: {
-            token: localStorage.getItem("token"),
-          },
-        });
+ const deleteHandler = async (id) => {
+  if (confirm("Are you sure you want to delete this course")) {
+    try {
+      const { data } = await axios.delete(`${server}/api/course/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // ✅ FIXED
+        },
+      });
 
-        toast.success(data.message);
-        fetchCourses();
-      } catch (error) {
-        toast.error(error.response.data.message);
-      }
+      toast.success(data.message);
+      fetchCourses();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Delete failed");
     }
-  };
+  }
+};
+
   return (
     <div className="course-card">
       <img src={`${server}/${course.image}`} alt="" className="course-image" />

@@ -29,11 +29,12 @@ export const CourseContextProvider = ({ children }) => {
   }
 
   async function fetchMyCourse() {
+    const token = localStorage.getItem("token");
     try {
-      const { data } = await axios.get(`${server}/api/mycourse`, {
-        headers: {
-          token: localStorage.getItem("token"),
-        },
+      const { data } = await axios.get(`${server}/api/course/mycourse`, {
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
       });
 
       setMyCourse(data.courses);

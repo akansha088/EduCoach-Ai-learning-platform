@@ -22,7 +22,7 @@ const VoiceModeController = () => {
 
     } else if (cmd.includes("course") || cmd.includes("lesson")) {
       speak("Opening course");
-      navigate("/course");
+      navigate("/admin/course");
     } else if (cmd.includes("logout")) {
       speak("Logging out");
       navigate("/logout");

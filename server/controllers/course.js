@@ -7,6 +7,10 @@ import crypto from "crypto";
 import { Payment } from "../models/Payment.js";
 import { Progress } from "../models/Progress.js";
 
+import Stripe from "stripe";
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+
 export const getAllCourses = TryCatch(async (req, res) => {
   const courses = await Courses.find();
   res.json({
@@ -66,7 +70,6 @@ export const getMyCourses = TryCatch(async (req, res) => {
 
 export const checkout = TryCatch(async (req, res) => {
   const user = await User.findById(req.user._id);
-
   const course = await Courses.findById(req.params.id);
 
   if (user.subscription.includes(course._id)) {
@@ -75,61 +78,71 @@ export const checkout = TryCatch(async (req, res) => {
     });
   }
 
-  const options = {
-    amount: Number(course.price * 100),
-    currency: "INR",
-  };
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    line_items: [
+      {
+        price_data: {
+          currency: "inr",
+          product_data: {
+            name: course.title,
+          },
+          unit_amount: course.price * 100, // price in paisa
+        },
+        quantity: 1,
+      },
+    ],
+    mode: "payment",
+    success_url: `${process.env.FRONTEND_URL}/payment-success/${course._id}`,
 
-  const order = await instance.orders.create(options);
+    cancel_url: `${process.env.FRONTEND_URL}/payment/cancel`,
+    metadata: {
+      courseId: course._id.toString(),
+      userId: user._id.toString(),
+    },
+  });
 
-  res.status(201).json({
-    order,
-    course,
+  res.status(200).json({
+    id: session.id,
+    url: session.url,
   });
 });
 
+
 export const paymentVerification = TryCatch(async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
-    req.body;
+  const { session_id } = req.body;
 
-  const body = razorpay_order_id + "|" + razorpay_payment_id;
+  const session = await stripe.checkout.sessions.retrieve(session_id);
 
-  const expectedSignature = crypto
-    .createHmac("sha256", process.env.Razorpay_Secret)
-    .update(body)
-    .digest("hex");
-
-  const isAuthentic = expectedSignature === razorpay_signature;
-
-  if (isAuthentic) {
-    await Payment.create({
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-    });
-
-    const user = await User.findById(req.user._id);
-
-    const course = await Courses.findById(req.params.id);
-
-    user.subscription.push(course._id);
-
-    await Progress.create({
-      course: course._id,
-      completedLectures: [],
-      user: req.user._id,
-    });
-
-    await user.save();
-
-    res.status(200).json({
-      message: "Course Purchased Successfully",
-    });
-  } else {
-    return res.status(400).json({
-      message: "Payment Failed",
-    });
+  if (session.payment_status !== "paid") {
+    return res.status(400).json({ message: "Payment Failed" });
   }
+
+  const courseId = session.metadata.courseId;
+  const userId = session.metadata.userId;
+
+  const user = await User.findById(userId);
+  const course = await Courses.findById(courseId);
+
+  user.subscription.push(course._id);
+
+  await Progress.create({
+    course: course._id,
+    completedLectures: [],
+    user: user._id,
+  });
+
+  await user.save();
+
+  await Payment.create({
+    stripe_payment_id: session.payment_intent,
+    courseId,
+    userId,
+  });
+
+  res.status(200).json({
+    message: "Course Purchased Successfully",
+  });
 });
 
 export const addProgress = TryCatch(async (req, res) => {
@@ -176,3 +189,22 @@ export const getYourProgress = TryCatch(async (req, res) => {
     progress,
   });
 });
+
+export const coursePaymentSuccessHandler = TryCatch(async (req, res) => {
+  const courseId = req.params.id;
+  const user = await User.findById(req.user._id);
+
+  if (!user.subscription.map(String).includes(courseId)) {
+    user.subscription.push(courseId);
+    await Progress.create({
+      course: courseId,
+      user: user._id,
+      completedLectures: [],
+    });
+    await user.save();
+  }
+
+  res.status(200).json({ message: "Course added to your profile" });
+});
+
+
