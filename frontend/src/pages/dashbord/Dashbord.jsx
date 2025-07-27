@@ -1,22 +1,17 @@
 import React from "react";
-import "./dashbord.css";
-import { CourseData } from "../../context/CourseContext";
-import CourseCard from "../../components/coursecard/CourseCard";
+import Sidebar from "../../components/dashboard/sidebar";
+import { Outlet } from "react-router-dom";
+import "./dashboard.css"; // ← link your CSS
 
-const Dashbord = () => {
-  const { mycourse } = CourseData();
+const Dashboard = () => {
   return (
-    <div className="student-dashboard">
-      <h2>All Enrolled Courses</h2>
-      <div className="dashboard-content">
-        {mycourse && mycourse.length > 0 ? (
-          mycourse.map((e) => <CourseCard key={e._id} course={e} />)
-        ) : (
-          <p>No course Enrolled Yet</p>
-        )}
-      </div>
+    <div className="dashboard-layout">
+      <Sidebar />
+      <main className="dashboard-main">
+        <Outlet />
+      </main>
     </div>
   );
 };
 
-export default Dashbord;
+export default Dashboard;

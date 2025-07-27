@@ -21,16 +21,24 @@ const Lecture = ({ user }) => {
   const [videoPrev, setVideoPrev] = useState("");
   const [btnLoading, setBtnLoading] = useState(false);
 
-  if (user && user.role !== "admin" && !user.subscription.includes(params.id))
+  const token = localStorage.getItem("token");
+
+  const authConfig = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+
+  if (user && user.role !== "admin" && !user.subscription.includes(params.id)) {
     return navigate("/");
+  }
 
   async function fetchLectures() {
     try {
-      const { data } = await axios.get(`${server}/api/lectures/${params.id}`, {
-        headers: {
-          token: localStorage.getItem("token"),
-        },
-      });
+      const { data } = await axios.get(
+        `${server}/api/lectures/${params.id}`,
+        authConfig
+      );
       setLectures(data.lectures);
       setLoading(false);
     } catch (error) {
@@ -42,11 +50,10 @@ const Lecture = ({ user }) => {
   async function fetchLecture(id) {
     setLecLoading(true);
     try {
-      const { data } = await axios.get(`${server}/api/lecture/${id}`, {
-        headers: {
-          token: localStorage.getItem("token"),
-        },
-      });
+      const { data } = await axios.get(
+        `${server}/api/lecture/${id}`,
+        authConfig
+      );
       setLecture(data.lecture);
       setLecLoading(false);
     } catch (error) {
@@ -80,11 +87,7 @@ const Lecture = ({ user }) => {
       const { data } = await axios.post(
         `${server}/api/course/${params.id}`,
         myForm,
-        {
-          headers: {
-            token: localStorage.getItem("token"),
-          },
-        }
+        authConfig
       );
 
       toast.success(data.message);
@@ -104,11 +107,10 @@ const Lecture = ({ user }) => {
   const deleteHandler = async (id) => {
     if (confirm("Are you sure you want to delete this lecture")) {
       try {
-        const { data } = await axios.delete(`${server}/api/lecture/${id}`, {
-          headers: {
-            token: localStorage.getItem("token"),
-          },
-        });
+        const { data } = await axios.delete(
+          `${server}/api/lecture/${id}`,
+          authConfig
+        );
 
         toast.success(data.message);
         fetchLectures();
@@ -127,11 +129,7 @@ const Lecture = ({ user }) => {
     try {
       const { data } = await axios.get(
         `${server}/api/user/progress?course=${params.id}`,
-        {
-          headers: {
-            token: localStorage.getItem("token"),
-          },
-        }
+        authConfig
       );
 
       setCompleted(data.courseProgressPercentage);
@@ -148,11 +146,7 @@ const Lecture = ({ user }) => {
       const { data } = await axios.post(
         `${server}/api/user/progress?course=${params.id}&lectureId=${id}`,
         {},
-        {
-          headers: {
-            token: localStorage.getItem("token"),
-          },
-        }
+        authConfig
       );
       console.log(data.message);
       fetchProgress();
@@ -161,12 +155,11 @@ const Lecture = ({ user }) => {
     }
   };
 
-  console.log(progress);
-
   useEffect(() => {
     fetchLectures();
     fetchProgress();
   }, []);
+
   return (
     <>
       {loading ? (
@@ -260,10 +253,9 @@ const Lecture = ({ user }) => {
 
               {lectures && lectures.length > 0 ? (
                 lectures.map((e, i) => (
-                  <>
+                  <React.Fragment key={i}>
                     <div
                       onClick={() => fetchLecture(e._id)}
-                      key={i}
                       className={`lecture-number ${
                         lecture._id === e._id && "active"
                       }`}
@@ -292,7 +284,7 @@ const Lecture = ({ user }) => {
                         Delete {e.title}
                       </button>
                     )}
-                  </>
+                  </React.Fragment>
                 ))
               ) : (
                 <p>No Lectures Yet!</p>

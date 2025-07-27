@@ -1,0 +1,107 @@
+/* MyCourses.css */
+
+.my-courses-container {
+  padding: 2rem;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.heading {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: #333;
+  text-align: center;
+}
+
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.course-card {
+  background-color: #fff;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.course-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+}
+
+.course-image {
+  width: 100%;
+  height: 11rem;
+  object-fit: cover;
+  display: block;
+}
+
+.course-content {
+  padding: 1rem;
+}
+
+.course-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #4a2a84;
+  margin-bottom: 0.5rem;
+}
+
+.course-description {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+/* State messages */
+.loading,
+.no-courses {
+  padding: 3rem 1rem;
+  font-size: 1.1rem;
+  color: #555;
+  text-align: center;
+}
+
+/* Responsive improvements */
+@media (max-width: 480px) {
+  .my-courses-container {
+    padding: 1rem;
+  }
+
+  .heading {
+    font-size: 1.5rem;
+  }
+
+  .course-title {
+    font-size: 1rem;
+  }
+
+  .course-description {
+    font-size: 0.85rem;
+  }
+}
+
+.start-button {
+  margin-top: 1rem;
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  background-color: #5e3ca4;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 6px;
+  text-decoration: none;
+  text-align: center;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.start-button:hover {
+  background-color: #4c2f91;
+  transform: translateY(-2px);
+}
+

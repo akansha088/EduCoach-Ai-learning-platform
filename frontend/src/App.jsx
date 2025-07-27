@@ -15,6 +15,8 @@ import Courses from "./pages/courses/Courses";
 import CourseDescription from "./pages/coursedescription/CourseDescription";
 import PaymentSuccess from "./pages/paymentsuccess/PaymentSuccess";
 import Dashbord from "./pages/dashbord/Dashbord";
+import MyCourses from "./components/dashboard/MyCourses";
+
 import CourseStudy from "./pages/coursestudy/CourseStudy";
 import Lecture from "./pages/lecture/Lecture";
 import AdminDashbord from "./admin/Dashboard/AdminDashbord";
@@ -66,10 +68,10 @@ const App = () => {
   element={isAuth ? <PaymentSuccess user={user} /> : <Login />}
 />
 
-            <Route
-              path="/:id/dashboard"
-              element={isAuth ? <Dashbord user={user} /> : <Login />}
-            />
+            <Route path="/:id/dashboard" element={isAuth ? <Dashbord user={user} /> : <Login />}>
+              <Route path="my-courses" element={<MyCourses />} />
+            </Route>
+            
             <Route
               path="/course/study/:id"
               element={isAuth ? <CourseStudy user={user} /> : <Login />}

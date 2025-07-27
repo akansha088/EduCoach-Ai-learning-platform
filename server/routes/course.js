@@ -25,3 +25,5 @@ router.post("/course/payment/success/:id", isAuth, coursePaymentSuccessHandler);
 
 
 export default router;
+
+

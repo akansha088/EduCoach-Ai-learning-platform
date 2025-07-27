@@ -60,13 +60,22 @@ export const fetchLecture = TryCatch(async (req, res) => {
   res.json({ lecture });
 });
 
-export const getMyCourses = TryCatch(async (req, res) => {
-  const courses = await Courses.find({ _id: req.user.subscription });
+export const getMyCourses = async (req, res) => {
+  try {
+    const userId = req.user._id;
 
-  res.json({
-    courses,
-  });
-});
+    const user = await User.findById(userId).populate("subscription");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ courses: user.subscription });
+  } catch (error) {
+    console.error("Error in getMyCourses:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
 
 export const checkout = TryCatch(async (req, res) => {
   const user = await User.findById(req.user._id);
