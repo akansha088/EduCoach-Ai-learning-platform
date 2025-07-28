@@ -6,6 +6,7 @@ import { server } from "../../main";
 import Loading from "../../components/loading/Loading";
 import toast from "react-hot-toast";
 import { TiTick } from "react-icons/ti";
+import QuizTab from "../../components/quiz/QuizTab";
 
 const Lecture = ({ user }) => {
   const [lectures, setLectures] = useState([]);
@@ -13,14 +14,21 @@ const Lecture = ({ user }) => {
   const [loading, setLoading] = useState(true);
   const [lecLoading, setLecLoading] = useState(false);
   const [show, setShow] = useState(false);
-  const params = useParams();
-  const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [video, setvideo] = useState("");
+  const [pdf, setPdf] = useState("");
   const [videoPrev, setVideoPrev] = useState("");
   const [btnLoading, setBtnLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("lectures");
 
+  const [completed, setCompleted] = useState("");
+  const [completedLec, setCompletedLec] = useState("");
+  const [lectLength, setLectLength] = useState("");
+  const [progress, setProgress] = useState([]);
+
+  const params = useParams();
+  const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
   const authConfig = {
@@ -32,6 +40,11 @@ const Lecture = ({ user }) => {
   if (user && user.role !== "admin" && !user.subscription.includes(params.id)) {
     return navigate("/");
   }
+
+  useEffect(() => {
+    fetchLectures();
+    fetchProgress();
+  }, []);
 
   async function fetchLectures() {
     try {
@@ -62,10 +75,24 @@ const Lecture = ({ user }) => {
     }
   }
 
+  async function fetchProgress() {
+    try {
+      const { data } = await axios.get(
+        `${server}/api/user/progress?course=${params.id}`,
+        authConfig
+      );
+      setCompleted(data.courseProgressPercentage);
+      setCompletedLec(data.completedLectures);
+      setLectLength(data.allLectures);
+      setProgress(data.progress);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   const changeVideoHandler = (e) => {
     const file = e.target.files[0];
     const reader = new FileReader();
-
     reader.readAsDataURL(file);
 
     reader.onloadend = () => {
@@ -74,14 +101,19 @@ const Lecture = ({ user }) => {
     };
   };
 
+  const changePdfHandler = (e) => {
+    setPdf(e.target.files[0]);
+  };
+
   const submitHandler = async (e) => {
-    setBtnLoading(true);
     e.preventDefault();
+    setBtnLoading(true);
     const myForm = new FormData();
 
     myForm.append("title", title);
     myForm.append("description", description);
-    myForm.append("file", video);
+    if (video) myForm.append("file", video);
+    if (pdf) myForm.append("pdf", pdf);
 
     try {
       const { data } = await axios.post(
@@ -89,17 +121,17 @@ const Lecture = ({ user }) => {
         myForm,
         authConfig
       );
-
       toast.success(data.message);
-      setBtnLoading(false);
       setShow(false);
+      setBtnLoading(false);
       fetchLectures();
       setTitle("");
       setDescription("");
       setvideo("");
+      setPdf("");
       setVideoPrev("");
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Upload failed");
       setBtnLoading(false);
     }
   };
@@ -111,7 +143,6 @@ const Lecture = ({ user }) => {
           `${server}/api/lecture/${id}`,
           authConfig
         );
-
         toast.success(data.message);
         fetchLectures();
       } catch (error) {
@@ -120,86 +151,101 @@ const Lecture = ({ user }) => {
     }
   };
 
-  const [completed, setCompleted] = useState("");
-  const [completedLec, setCompletedLec] = useState("");
-  const [lectLength, setLectLength] = useState("");
-  const [progress, setProgress] = useState([]);
-
-  async function fetchProgress() {
-    try {
-      const { data } = await axios.get(
-        `${server}/api/user/progress?course=${params.id}`,
-        authConfig
-      );
-
-      setCompleted(data.courseProgressPercentage);
-      setCompletedLec(data.completedLectures);
-      setLectLength(data.allLectures);
-      setProgress(data.progress);
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
   const addProgress = async (id) => {
     try {
-      const { data } = await axios.post(
+      await axios.post(
         `${server}/api/user/progress?course=${params.id}&lectureId=${id}`,
         {},
         authConfig
       );
-      console.log(data.message);
       fetchProgress();
     } catch (error) {
       console.log(error);
     }
   };
 
-  useEffect(() => {
-    fetchLectures();
-    fetchProgress();
-  }, []);
-
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <>
-      {loading ? (
-        <Loading />
-      ) : (
-        <>
-          <div className="progress">
-            Lecture completed - {completedLec} out of {lectLength} <br />
-            <progress value={completed} max={100}></progress> {completed} %
-          </div>
-          <div className="lecture-page">
-            <div className="left">
-              {lecLoading ? (
-                <Loading />
-              ) : (
+      {user?.role !== "admin" && (
+        <div className="progress">
+          Lecture completed - {completedLec} out of {lectLength}
+          <br />
+          <progress value={completed} max={100}></progress> {completed} %
+        </div>
+      )}
+
+      <div className="lecture-page">
+        <div className="left">
+          {lecLoading ? (
+            <Loading />
+          ) : (
+            <>
+              {lecture.video || lecture.pdf ? (
                 <>
-                  {lecture.video ? (
-                    <>
-                      <video
-                        src={`${server}/${lecture.video}`}
-                        width={"100%"}
-                        controls
-                        controlsList="nodownload noremoteplayback"
-                        disablePictureInPicture
-                        disableRemotePlayback
-                        autoPlay
-                        onEnded={() => addProgress(lecture._id)}
-                      ></video>
-                      <h1>{lecture.title}</h1>
-                      <h3>{lecture.description}</h3>
-                    </>
-                  ) : (
-                    <h1>Please Select a Lecture</h1>
+                  {lecture.video && (
+                    <video
+                      src={`${server}/${lecture.video}`}
+                      width={"100%"}
+                      controls
+                      controlsList="nodownload noremoteplayback"
+                      disablePictureInPicture
+                      disableRemotePlayback
+                      autoPlay
+                      onEnded={() => addProgress(lecture._id)}
+                    ></video>
                   )}
+
+                  {lecture.pdf && (
+                    <div style={{ marginTop: "1rem" }}>
+                      <h4>Download Lecture PDF:</h4>
+                      <a
+                        href={`${server}/${lecture.pdf}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="common-btn"
+                      >
+                        View / Download PDF
+                      </a>
+                    </div>
+                  )}
+
+                  <h1>{lecture.title}</h1>
+                  <h3>{lecture.description}</h3>
                 </>
+              ) : (
+                <h1>Please Select a Lecture</h1>
               )}
-            </div>
-            <div className="right">
+            </>
+          )}
+        </div>
+
+        <div className="right">
+          {/* Tab bar */}
+          <div className="tab-bar">
+            <button
+              className={`tab-btn ${activeTab === "lectures" ? "active" : ""}`}
+              onClick={() => setActiveTab("lectures")}
+            >
+              📚 Lectures
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "quiz" ? "active" : ""}`}
+              onClick={() => setActiveTab("quiz")}
+            >
+              ❓ Quiz
+            </button>
+          </div>
+
+          {/* Conditional Tabs */}
+          {activeTab === "lectures" && (
+            <>
               {user && user.role === "admin" && (
-                <button className="common-btn" onClick={() => setShow(!show)}>
+                <button
+                  className="common-btn"
+                  onClick={() => setShow(!show)}
+                >
                   {show ? "Close" : "Add Lecture +"}
                 </button>
               )}
@@ -226,9 +272,16 @@ const Lecture = ({ user }) => {
 
                     <input
                       type="file"
-                      placeholder="choose video"
+                      accept="video/*"
+                      placeholder="Choose video"
                       onChange={changeVideoHandler}
-                      required
+                    />
+
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      placeholder="Choose PDF"
+                      onChange={changePdfHandler}
                     />
 
                     {videoPrev && (
@@ -289,10 +342,15 @@ const Lecture = ({ user }) => {
               ) : (
                 <p>No Lectures Yet!</p>
               )}
-            </div>
-          </div>
-        </>
-      )}
+            </>
+          )}
+
+          {activeTab === "quiz" && (
+            <QuizTab courseId={params.id} authConfig={authConfig} user={user} />
+
+          )}
+        </div>
+      </div>
     </>
   );
 };

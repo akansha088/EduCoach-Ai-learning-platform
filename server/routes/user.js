@@ -6,6 +6,7 @@ import {
   register,
   resetPassword,
   verifyUser,
+  getCourseQuiz,
 } from "../controllers/user.js";
 import { isAuth } from "../middlewares/isAuth.js";
 import { addProgress, getYourProgress } from "../controllers/course.js";
@@ -20,5 +21,8 @@ router.post("/user/forgot", forgotPassword);
 router.post("/user/reset", resetPassword);
 router.post("/user/progress", isAuth, addProgress);
 router.get("/user/progress", isAuth, getYourProgress);
+router.get("/user/quiz/:courseId", isAuth, getCourseQuiz);
+
+
 
 export default router;

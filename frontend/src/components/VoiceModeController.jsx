@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const VoiceModeController = () => {
   const [isVoiceModeOn, setIsVoiceModeOn] = useState(false);
+  const [navPath, setNavPath] = useState(null); // 🌟 new state to hold path to navigate
   const recognitionRef = useRef(null);
   const navigate = useNavigate();
 
@@ -18,14 +19,16 @@ const VoiceModeController = () => {
 
     if (cmd.includes("dashboard")) {
       speak("Opening dashboard");
-      navigate(`/admin/dashboard`);
+      setNavPath("/admin/dashboard");
 
     } else if (cmd.includes("course") || cmd.includes("lesson")) {
       speak("Opening course");
-      navigate("/admin/course");
+      setNavPath("/admin/course");
+
     } else if (cmd.includes("logout")) {
       speak("Logging out");
-      navigate("/logout");
+      setNavPath("/logout");
+
     } else {
       speak("Sorry, I didn't understand that command.");
     }
@@ -66,7 +69,7 @@ const VoiceModeController = () => {
         console.log("🛑 Recognition ended");
         if (isVoiceModeOn) {
           console.log("🔁 Restarting recognition...");
-          recognition.start(); // restart if voice mode still on
+          recognition.start();
         }
       };
 
@@ -96,6 +99,14 @@ const VoiceModeController = () => {
       stopVoiceRecognition();
     }
   };
+
+  // ✅ Safely trigger navigation inside useEffect
+  useEffect(() => {
+    if (navPath) {
+      navigate(navPath);
+      setNavPath(null); // reset after navigating
+    }
+  }, [navPath, navigate]);
 
   return (
     <div style={{ textAlign: 'center', margin: '20px' }}>

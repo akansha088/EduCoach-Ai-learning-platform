@@ -8,8 +8,10 @@ import {
   getAllStats,
   getAllUser,
   updateRole,
+  createQuizForCourse,
 } from "../controllers/admin.js";
 import { uploadFiles } from "../middlewares/multer.js";
+
 
 const router = express.Router();
 
@@ -20,6 +22,9 @@ router.delete("/lecture/:id", isAuth, isAdmin, deleteLecture);
 router.get("/stats", isAuth, isAdmin, getAllStats);
 router.put("/user/:id", isAuth, updateRole);
 router.get("/users", isAuth, isAdmin, getAllUser);
+router.post("/admin/quiz/:courseId", isAuth, isAdmin, createQuizForCourse);
+
+
 
 router.get("/users", isAuth, isAdmin, async (req, res) => {
   const users = await User.find();

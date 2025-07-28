@@ -5,6 +5,8 @@ import { rm } from "fs";
 import { promisify } from "util";
 import fs from "fs";
 import { User } from "../models/User.js";
+import { Quiz } from "../models/Quiz.js";
+import { QuizAttempt } from "../models/QuizAttempt.js";
 
 
 export const createCourse = TryCatch(async (req, res) => {
@@ -42,23 +44,30 @@ export const createCourse = TryCatch(async (req, res) => {
   }
 });
 
-
 export const addLectures = TryCatch(async (req, res) => {
   const course = await Courses.findById(req.params.id);
 
-  if (!course)
+  if (!course) {
     return res.status(404).json({
-      message: "No Course with this id",
+      message: "No Course with this ID",
     });
+  }
 
   const { title, description } = req.body;
 
-  const file = req.file;
+  // ✅ After using .fields([...]), use req.files
+  const videoFile = req.files?.file?.[0];
+  const pdfFile = req.files?.pdf?.[0];
+
+  if (!videoFile && !pdfFile) {
+    return res.status(400).json({ message: "Please upload at least a video or a PDF" });
+  }
 
   const lecture = await Lecture.create({
     title,
     description,
-    video: file?.path,
+    video: videoFile?.path || "", // optional
+    pdf: pdfFile?.path || "",     // optional
     course: course._id,
   });
 
@@ -67,6 +76,7 @@ export const addLectures = TryCatch(async (req, res) => {
     lecture,
   });
 });
+
 
 export const deleteLecture = TryCatch(async (req, res) => {
   const lecture = await Lecture.findById(req.params.id);
@@ -158,3 +168,41 @@ export const updateRole = TryCatch(async (req, res) => {
     });
   }
 });
+
+export const createQuizForCourse = TryCatch(async (req, res) => {
+  const { title, questions } = req.body;
+  const course = req.params.courseId;
+
+  if (!title || !questions || questions.length === 0) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  // Validate each question
+  for (let q of questions) {
+    if (!q.question || !q.correctAnswer || !q.type) {
+      return res.status(400).json({ message: "Each question must have a question, correct answer, and type." });
+    }
+    if (q.type === "mcq" && (!q.options || q.options.length < 2)) {
+      return res.status(400).json({ message: "MCQ questions must have at least 2 options." });
+    }
+    if (q.type === "truefalse") {
+      q.options = ["True", "False"];
+    }
+    if (q.type === "short") {
+      q.options = [];
+    }
+  }
+
+  const quiz = await Quiz.create({
+    title,
+    course,
+    questions,
+    createdBy: req.user._id,
+  });
+
+  res.status(201).json({
+    message: "Quiz uploaded successfully",
+    quiz,
+  });
+});
+

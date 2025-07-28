@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import sendMail, { sendForgotMail } from "../middlewares/sendMail.js";
 import TryCatch from "../middlewares/TryCatch.js";
+import { Quiz } from "../models/Quiz.js";
 
 export const register = TryCatch(async (req, res) => {
   const { email, name, password } = req.body;
@@ -164,3 +165,19 @@ export const resetPassword = TryCatch(async (req, res) => {
 
   res.json({ message: "Password Reset" });
 });
+
+export const getCourseQuiz = TryCatch(async (req, res) => {
+  const { courseId } = req.params;
+
+  const quiz = await Quiz.find({ course: courseId });
+
+  if (!quiz || quiz.length === 0) {
+    return res.status(404).json({ message: "No quiz found for this course" });
+  }
+
+  res.status(200).json({
+    success: true,
+    quiz,
+  });
+});
+

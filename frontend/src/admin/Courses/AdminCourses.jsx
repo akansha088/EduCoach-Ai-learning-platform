@@ -19,7 +19,10 @@ const categories = [
 const AdminCourses = ({ user }) => {
   const navigate = useNavigate();
 
-  if (user && user.role !== "admin") return navigate("/");
+  if (user && user.role !== "admin") {
+    navigate("/");
+    return null;
+  }
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -31,26 +34,24 @@ const AdminCourses = ({ user }) => {
   const [imagePrev, setImagePrev] = useState("");
   const [btnLoading, setBtnLoading] = useState(false);
 
+  const { courses, fetchCourses } = CourseData();
+
   const changeImageHandler = (e) => {
     const file = e.target.files[0];
     const reader = new FileReader();
 
     reader.readAsDataURL(file);
-
     reader.onloadend = () => {
       setImagePrev(reader.result);
       setImage(file);
     };
   };
 
-  const { courses, fetchCourses } = CourseData();
-
   const submitHandler = async (e) => {
     e.preventDefault();
     setBtnLoading(true);
 
     const myForm = new FormData();
-
     myForm.append("title", title);
     myForm.append("description", description);
     myForm.append("category", category);
@@ -61,110 +62,146 @@ const AdminCourses = ({ user }) => {
 
     try {
       const { data } = await axios.post(`${server}/api/course/new`, myForm, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`, // ✅ CORRECT
-      },
-    });
-    
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
       toast.success(data.message);
       setBtnLoading(false);
       await fetchCourses();
-      setImage("");
+
+      // Reset fields
       setTitle("");
       setDescription("");
-      setDuration("");
-      setImagePrev("");
-      setCreatedBy("");
-      setPrice("");
       setCategory("");
+      setPrice("");
+      setCreatedBy("");
+      setDuration("");
+      setImage("");
+      setImagePrev("");
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Something went wrong");
     }
   };
 
   return (
     <Layout>
-      <div className="admin-courses">
-        <div className="left">
-          <h1>All Courses</h1>
-          <div className="dashboard-content">
-            {courses && courses.length > 0 ? (
-              courses.map((e) => {
-                return <CourseCard key={e._id} course={e} />;
-              })
-            ) : (
-              <p>No Courses Yet</p>
-            )}
+      <div className="admin-courses-container">
+        <div className="admin-header">
+          <div className="header-content">
+            <h1 className="admin-title">📚 Admin Dashboard</h1>
+            <p className="admin-subtitle">Manage all your courses in one place</p>
+          </div>
+          <div className="stats-badges">
+            <div className="stat-badge">
+              <span className="stat-number">{courses?.length || 0}</span>
+              <span className="stat-label">Courses</span>
+            </div>
           </div>
         </div>
 
-        <div className="right">
-          <div className="add-course">
-            <div className="course-form">
-              <h2>Add Course</h2>
-              <form onSubmit={submitHandler}>
-                <label htmlFor="text">Title</label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                />
+        <div className="admin-main-content">
+          <div className="courses-section">
+            <div className="section-header">
+              <h2 className="section-title">📦 All Courses</h2>
+              <span className="courses-count">{courses?.length || 0} Total</span>
+            </div>
 
-                <label htmlFor="text">Description</label>
-                <input
-                  type="text"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  required
-                />
+            {courses && courses.length > 0 ? (
+              <div className="courses-grid">
+                {courses.map((course) => (
+                  <div className="course-card-wrapper" key={course._id}>
+                    <CourseCard course={course} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <div className="empty-icon">🧐</div>
+                <h3>No Courses Available</h3>
+                <p>Start by adding a new course on the right.</p>
+              </div>
+            )}
+          </div>
 
-                <label htmlFor="text">Price</label>
-                <input
-                  type="number"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  required
-                />
+          <div className="form-section">
+            <div className="form-container">
+              <div className="form-header">
+                <h2 className="form-title">➕ Add New Course</h2>
+                <p className="form-description">Fill in the details to create a course.</p>
+              </div>
 
-                <label htmlFor="text">createdBy</label>
-                <input
-                  type="text"
-                  value={createdBy}
-                  onChange={(e) => setCreatedBy(e.target.value)}
-                  required
-                />
+              <form onSubmit={submitHandler} className="course-form form-grid">
+                <div className="input-group">
+                  <label className="input-label">Title</label>
+                  <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="form-input" required />
+                </div>
 
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                >
-                  <option value={""}>Select Category</option>
-                  {categories.map((e) => (
-                    <option value={e} key={e}>
-                      {e}
-                    </option>
-                  ))}
-                </select>
+                <div className="input-group">
+                  <label className="input-label">Description</label>
+                  <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} className="form-input" required />
+                </div>
 
-                <label htmlFor="text">Duration</label>
-                <input
-                  type="number"
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  required
-                />
+                <div className="input-group">
+                  <label className="input-label">Price</label>
+                  <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="form-input" required />
+                </div>
 
-                <input type="file" required onChange={changeImageHandler} />
-                {imagePrev && <img src={imagePrev} alt="" width={300} />}
+                <div className="input-group">
+                  <label className="input-label">Created By</label>
+                  <input type="text" value={createdBy} onChange={(e) => setCreatedBy(e.target.value)} className="form-input" required />
+                </div>
 
-                <button
-                  type="submit"
-                  disabled={btnLoading}
-                  className="common-btn"
-                >
-                  {btnLoading ? "Please Wait..." : "Add"}
-                </button>
+                <div className="input-group">
+                  <label className="input-label">Category</label>
+                  <select value={category} onChange={(e) => setCategory(e.target.value)} className="form-select" required>
+                    <option value="">Select Category</option>
+                    {categories.map((cat) => (
+                      <option value={cat} key={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label">Duration (hours)</label>
+                  <input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} className="form-input" required />
+                </div>
+
+                <div className="file-upload-area">
+                  <label className="file-upload-label">
+                    <div className="upload-content">
+                      <div className="upload-icon">📤</div>
+                      <div className="upload-text">Upload Thumbnail</div>
+                      <div className="upload-subtext">Only image files allowed</div>
+                    </div>
+                    <input type="file" accept="image/*" onChange={changeImageHandler} className="file-input" required />
+                  </label>
+
+                  {imagePrev && (
+                    <div className="image-preview">
+                      <div className="preview-container">
+                        <img src={imagePrev} alt="Preview" className="preview-image" />
+                        <div className="preview-overlay">Preview</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-actions">
+                  <button type="submit" disabled={btnLoading} className="submit-btn">
+                    {btnLoading ? (
+                      <>
+                        <div className="loading-spinner" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <span className="btn-icon">➕</span> Add Course
+                      </>
+                    )}
+                  </button>
+                </div>
               </form>
             </div>
           </div>

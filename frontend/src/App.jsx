@@ -25,7 +25,7 @@ import AdminUsers from "./admin/Users/AdminUsers";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import VoiceModeController from './components/VoiceModeController';
-
+import FloatingChatbot from './components/Chatbot/FloatingChatbot';
 
 const App = () => {
   const { isAuth, user, loading } = UserData();
@@ -96,7 +96,7 @@ const App = () => {
               element={isAuth ? <AdminUsers user={user} /> : <Login />}
             />
           </Routes>
-         
+           <FloatingChatbot />
           <Footer />
         </BrowserRouter>
       )}
