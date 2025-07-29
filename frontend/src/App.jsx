@@ -25,7 +25,8 @@ import AdminUsers from "./admin/Users/AdminUsers";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import VoiceModeController from './components/VoiceModeController';
-import FloatingChatbot from './components/Chatbot/FloatingChatbot';
+import FloatingChatbot from './components/ChatBot/FloatingChatbot';
+import ExternalRedirect from "./components/AiQuiz/AiQuiz";
 
 const App = () => {
   const { isAuth, user, loading } = UserData();
@@ -95,6 +96,11 @@ const App = () => {
               path="/admin/users"
               element={isAuth ? <AdminUsers user={user} /> : <Login />}
             />
+            
+          <Route 
+          path="/aiquiz" 
+          element={<ExternalRedirect url="http://localhost:8501" />} />
+
           </Routes>
            <FloatingChatbot />
           <Footer />

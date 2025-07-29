@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
-import Chatbot from './chatbot/';  // Note: Component name starts with capital
-
+import ChatBot from './ChatBot';
 import './FloatingChatbot.css';
 
 const FloatingChatbot = ({ user }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  const toggleChat = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const closeChat = () => {
+    setIsOpen(false);
+  };
 
   return (
     <>
@@ -14,25 +21,25 @@ const FloatingChatbot = ({ user }) => {
             <div className="floating-chat-header">
               <div className="chat-header-info">
                 <span className="chat-title">AI Learning Assistant</span>
-                <span className="chat-subtitle">Ask me about courses, lectures, or anything!</span>
+                <span className="chat-subtitle">Powered by Gemini - Ask anything!</span>
               </div>
               <button 
                 className="close-chat-btn"
-                onClick={() => setIsOpen(false)}
+                onClick={closeChat}
                 aria-label="Close chat"
               >
                 ×
               </button>
             </div>
-            <Chatbot user={user} onClose={() => setIsOpen(false)} />
+            <ChatBot user={user} onClose={closeChat} />
           </div>
         </div>
       )}
       
       <button 
         className={`floating-chat-button ${isOpen ? 'open' : ''}`}
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Open AI Assistant"
+        onClick={toggleChat}
+        aria-label={isOpen ? "Close AI Assistant" : "Open AI Assistant"}
       >
         {isOpen ? '×' : '🤖'}
       </button>

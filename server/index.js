@@ -4,6 +4,7 @@ import { connectDb } from "./database/db.js";
 // import Razorpay from "razorpay";
 import cors from "cors";
 
+
 dotenv.config();
 
 // export const instance = new Razorpay({
@@ -34,6 +35,8 @@ import adminRoutes from "./routes/admin.js";
 app.use("/api", userRoutes);
 app.use("/api", courseRoutes);
 app.use("/api", adminRoutes);
+
+
 
 
 
