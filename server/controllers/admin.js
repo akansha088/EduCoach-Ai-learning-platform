@@ -55,19 +55,17 @@ export const addLectures = TryCatch(async (req, res) => {
 
   const { title, description } = req.body;
 
-  // ✅ After using .fields([...]), use req.files
-  const videoFile = req.files?.file?.[0];
-  const pdfFile = req.files?.pdf?.[0];
+  // Use req.file for single file upload
+  const videoFile = req.file;
 
-  if (!videoFile && !pdfFile) {
-    return res.status(400).json({ message: "Please upload at least a video or a PDF" });
+  if (!videoFile) {
+    return res.status(400).json({ message: "Please upload a video" });
   }
 
   const lecture = await Lecture.create({
     title,
     description,
-    video: videoFile?.path || "", // optional
-    pdf: pdfFile?.path || "",     // optional
+    video: videoFile.path || "",
     course: course._id,
   });
 

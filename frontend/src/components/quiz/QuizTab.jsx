@@ -11,6 +11,13 @@ const QuizTab = ({ courseId, authConfig, user }) => {
   const [questions, setQuestions] = useState([
     { question: "", type: "mcq", options: ["", "", "", ""], correctAnswer: "" },
   ]);
+  // User quiz attempt state
+  const [userAnswers, setUserAnswers] = useState({});
+  const [attemptId, setAttemptId] = useState(null);
+  const [attemptLoading, setAttemptLoading] = useState(false);
+  const [fullScreenQuiz, setFullScreenQuiz] = useState(false);
+  const [showScore, setShowScore] = useState(false);
+  const [lastScore, setLastScore] = useState(null);
 
   const fetchQuiz = async () => {
     try {
@@ -73,9 +80,80 @@ const QuizTab = ({ courseId, authConfig, user }) => {
     }
   };
 
+  // Fetch previous attempt for selected quiz
+  const fetchUserAttempt = async (quizId) => {
+    setAttemptLoading(true);
+    setAttemptId(null);
+    setUserAnswers({});
+    setShowScore(false);
+    setLastScore(null);
+    try {
+      const { data } = await axios.get(`${server}/api/user/quiz/attempt?quizId=${quizId}`, authConfig);
+      if (data.attempt) {
+        setAttemptId(data.attempt._id);
+        // Map responses to { [questionId]: selected }
+        const answers = {};
+        data.attempt.responses.forEach(r => { answers[r.questionId] = r.selected; });
+        setUserAnswers(answers);
+        setLastScore(data.attempt.score);
+        setShowScore(true);
+      }
+    } catch (err) {
+      // No previous attempt, ignore
+    }
+    setAttemptLoading(false);
+  };
+
+  const handleUserAnswer = (questionId, value) => {
+    setUserAnswers((prev) => ({ ...prev, [questionId]: value }));
+  };
+
+  const handleUserSubmit = async (quiz) => {
+    const responses = quiz.questions.map(q => ({
+      questionId: q._id || q.question, // fallback to question text if no _id
+      selected: userAnswers[q._id || q.question] || ""
+    }));
+    // Calculate score (simple: correct answer match)
+    let score = 0;
+    quiz.questions.forEach((q, idx) => {
+      if ((userAnswers[q._id || q.question] || "").trim().toLowerCase() === (q.correctAnswer || "").trim().toLowerCase()) {
+        score++;
+      }
+    });
+    const payload = {
+      quizId: quiz._id,
+      responses,
+      score,
+      total: quiz.questions.length
+    };
+    try {
+      if (attemptId) {
+        const { data } = await axios.put(`${server}/api/user/quiz/attempt/${attemptId}`, payload, authConfig);
+        toast.success(data.message || "Quiz updated!");
+        setLastScore(score);
+        setShowScore(true);
+      } else {
+        const { data } = await axios.post(`${server}/api/user/quiz/attempt`, payload, authConfig);
+        toast.success(data.message || "Quiz submitted!");
+        setAttemptId(data.attempt._id);
+        setLastScore(score);
+        setShowScore(true);
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Submission failed");
+    }
+  };
+
   useEffect(() => {
     fetchQuiz();
   }, [courseId]);
+
+  // When a quiz is selected, fetch previous attempt
+  useEffect(() => {
+    if (selectedQuizIndex !== null && quizzes[selectedQuizIndex]) {
+      fetchUserAttempt(quizzes[selectedQuizIndex]._id);
+    }
+  }, [selectedQuizIndex]);
 
   return (
     <div className="quiz-tab">
@@ -138,7 +216,10 @@ const QuizTab = ({ courseId, authConfig, user }) => {
   <p>{new Date(quiz.createdAt).toLocaleDateString()}</p>
   <button
     className="common-btn start-btn"
-    onClick={() => setSelectedQuizIndex(index)}
+    onClick={() => {
+      setSelectedQuizIndex(index);
+      setFullScreenQuiz(true);
+    }}
   >
     Start Quiz
   </button>
@@ -148,24 +229,43 @@ const QuizTab = ({ courseId, authConfig, user }) => {
           </div>
         </>
       ) : quizzes.length > 0 ? (
-        selectedQuizIndex !== null ? (
+        selectedQuizIndex !== null && !fullScreenQuiz ? (
           <>
             <button onClick={() => setSelectedQuizIndex(null)} className="common-btn">⬅ Back to Quizzes</button>
             <h2>{quizzes[selectedQuizIndex].title}</h2>
+            {attemptLoading ? <p>Loading your previous attempt...</p> : null}
             {quizzes[selectedQuizIndex].questions.map((q, idx) => (
-              <div key={idx} className="quiz-question">
+              <div key={q._id || idx} className="quiz-question">
                 <p>{idx + 1}. {q.question}</p>
-                {q.type === "mcq" || q.type === "truefalse" ? (
+                {(q.type === "mcq" || q.type === "truefalse") ? (
                   q.options.map((option, i) => (
                     <label key={i} className="option-label">
-                      <input type="radio" name={`q-${idx}`} /> {option}
+                      <input
+                        type="radio"
+                        name={`q-${q._id || idx}`}
+                        value={option}
+                        checked={userAnswers[q._id || q.question] === option}
+                        onChange={() => handleUserAnswer(q._id || q.question, option)}
+                      /> {option}
                     </label>
                   ))
                 ) : (
-                  <textarea rows="2" placeholder="Your Answer..." />
+                  <textarea
+                    rows="2"
+                    placeholder="Your Answer..."
+                    value={userAnswers[q._id || q.question] || ""}
+                    onChange={e => handleUserAnswer(q._id || q.question, e.target.value)}
+                  />
                 )}
               </div>
             ))}
+            <button
+              className="common-btn"
+              onClick={() => handleUserSubmit(quizzes[selectedQuizIndex])}
+              disabled={attemptLoading}
+            >
+              {attemptId ? "Update Quiz" : "Submit Quiz"}
+            </button>
           </>
         ) : (
           <div className="quiz-list">
@@ -177,7 +277,10 @@ const QuizTab = ({ courseId, authConfig, user }) => {
   <p>{new Date(quiz.createdAt).toLocaleDateString()}</p>
   <button
     className="common-btn start-btn"
-    onClick={() => setSelectedQuizIndex(index)}
+    onClick={() => {
+      setSelectedQuizIndex(index);
+      setFullScreenQuiz(true);
+    }}
   >
     Start Quiz
   </button>
@@ -188,6 +291,86 @@ const QuizTab = ({ courseId, authConfig, user }) => {
         )
       ) : (
         <p>No quiz available for this course.</p>
+      )}
+      {selectedQuizIndex !== null && fullScreenQuiz && (
+        <div className="quiz-fullscreen-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.95)',
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'auto',
+        }}>
+          <button
+            style={{ position: 'absolute', top: 20, right: 30, zIndex: 10000, fontSize: 24, background: 'red', color: 'white', border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer' }}
+            onClick={() => {
+              setFullScreenQuiz(false);
+              setSelectedQuizIndex(null);
+            }}
+          >
+            Close Quiz ✖
+          </button>
+          <div style={{ width: '100%', maxWidth: 800, margin: '0 auto', background: 'white', borderRadius: 12, padding: 24 }}>
+            <h2>{quizzes[selectedQuizIndex].title}</h2>
+            {attemptLoading ? <p>Loading your previous attempt...</p> : null}
+            {quizzes[selectedQuizIndex].questions.map((q, idx) => (
+              <div key={q._id || idx} className="quiz-question">
+                <p>{idx + 1}. {q.question}</p>
+                {(q.type === "mcq" || q.type === "truefalse") ? (
+                  q.options.map((option, i) => (
+                    <label key={i} className="option-label">
+                      <input
+                        type="radio"
+                        name={`q-${q._id || idx}`}
+                        value={option}
+                        checked={userAnswers[q._id || q.question] === option}
+                        onChange={() => handleUserAnswer(q._id || q.question, option)}
+                      /> {option}
+                    </label>
+                  ))
+                ) : (
+                  <textarea
+                    rows="2"
+                    placeholder="Your Answer..."
+                    value={userAnswers[q._id || q.question] || ""}
+                    onChange={e => handleUserAnswer(q._id || q.question, e.target.value)}
+                  />
+                )}
+              </div>
+            ))}
+            <button
+              className="common-btn"
+              onClick={() => handleUserSubmit(quizzes[selectedQuizIndex])}
+              disabled={attemptLoading}
+            >
+              {attemptId ? "Update Quiz" : "Submit Quiz"}
+            </button>
+            {showScore && (
+              <div style={{ marginTop: 24, textAlign: 'center' }}>
+                <h3>Score: {lastScore} / {quizzes[selectedQuizIndex].questions.length}</h3>
+                <div style={{ color: 'green', fontWeight: 'bold', margin: '8px 0' }}>Test Attempted</div>
+                <button
+                  className="common-btn"
+                  style={{ marginTop: 12 }}
+                  onClick={() => {
+                    setUserAnswers({});
+                    setShowScore(false);
+                    setLastScore(null);
+                    setAttemptId(null);
+                  }}
+                >
+                  Re-attempt Quiz
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

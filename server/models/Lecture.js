@@ -13,9 +13,6 @@ const schema = new mongoose.Schema({
     type: String,
     // required: true,
   },
-  pdf: {
-  type: String,
-},
   course: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Courses",

@@ -7,6 +7,10 @@ import {
   resetPassword,
   verifyUser,
   getCourseQuiz,
+  submitQuizAttempt,
+  updateQuizAttempt,
+  getQuizAttempt,
+  getAllQuizAttempts,
 } from "../controllers/user.js";
 import { isAuth } from "../middlewares/isAuth.js";
 import { addProgress, getYourProgress } from "../controllers/course.js";
@@ -22,7 +26,10 @@ router.post("/user/reset", resetPassword);
 router.post("/user/progress", isAuth, addProgress);
 router.get("/user/progress", isAuth, getYourProgress);
 router.get("/user/quiz/:courseId", isAuth, getCourseQuiz);
-
+router.post("/user/quiz/attempt", isAuth, submitQuizAttempt);
+router.put("/user/quiz/attempt/:attemptId", isAuth, updateQuizAttempt);
+router.get("/user/quiz/attempt", isAuth, getQuizAttempt);
+router.get("/user/quiz/attempts", isAuth, getAllQuizAttempts);
 
 
 export default router;

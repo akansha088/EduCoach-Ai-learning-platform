@@ -17,7 +17,7 @@ const Lecture = ({ user }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [video, setvideo] = useState("");
-  const [pdf, setPdf] = useState("");
+  // const [pdf, setPdf] = useState("");
   const [videoPrev, setVideoPrev] = useState("");
   const [btnLoading, setBtnLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("lectures");
@@ -101,9 +101,9 @@ const Lecture = ({ user }) => {
     };
   };
 
-  const changePdfHandler = (e) => {
-    setPdf(e.target.files[0]);
-  };
+  // const changePdfHandler = (e) => {
+  //   setPdf(e.target.files[0]);
+  // };
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -113,7 +113,7 @@ const Lecture = ({ user }) => {
     myForm.append("title", title);
     myForm.append("description", description);
     if (video) myForm.append("file", video);
-    if (pdf) myForm.append("pdf", pdf);
+    // if (pdf) myForm.append("pdf", pdf);
 
     try {
       const { data } = await axios.post(
@@ -128,7 +128,7 @@ const Lecture = ({ user }) => {
       setTitle("");
       setDescription("");
       setvideo("");
-      setPdf("");
+      // setPdf("");
       setVideoPrev("");
     } catch (error) {
       toast.error(error.response?.data?.message || "Upload failed");
@@ -182,7 +182,7 @@ const Lecture = ({ user }) => {
             <Loading />
           ) : (
             <>
-              {lecture.video || lecture.pdf ? (
+              {lecture.video ? (
                 <>
                   {lecture.video && (
                     <video
@@ -197,7 +197,7 @@ const Lecture = ({ user }) => {
                     ></video>
                   )}
 
-                  {lecture.pdf && (
+                  {/* {lecture.pdf && (
                     <div style={{ marginTop: "1rem" }}>
                       <h4>Download Lecture PDF:</h4>
                       <a
@@ -209,7 +209,7 @@ const Lecture = ({ user }) => {
                         View / Download PDF
                       </a>
                     </div>
-                  )}
+                  )} */}
 
                   <h1>{lecture.title}</h1>
                   <h3>{lecture.description}</h3>
@@ -277,12 +277,12 @@ const Lecture = ({ user }) => {
                       onChange={changeVideoHandler}
                     />
 
-                    <input
+                    {/* <input
                       type="file"
                       accept=".pdf"
                       placeholder="Choose PDF"
                       onChange={changePdfHandler}
-                    />
+                    /> */}
 
                     {videoPrev && (
                       <video

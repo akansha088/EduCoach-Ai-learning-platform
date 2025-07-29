@@ -1,0 +1,47 @@
+.quiz-analytics-container {
+    padding: 32px;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f9fafb;
+  }
+  
+  .section-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    text-align: center;
+    color: #111827;
+  }
+  
+  .cards-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+  
+  .stat-card {
+    background: white;
+    padding: 24px 32px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+    text-align: center;
+    width: 280px;
+    transition: transform 0.3s;
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-4px);
+  }
+  
+  .stat-card h3 {
+    font-size: 18px;
+    color: #4b5563;
+    margin-bottom: 12px;
+  }
+  
+  .stat-card p {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1f2937;
+  }
+  

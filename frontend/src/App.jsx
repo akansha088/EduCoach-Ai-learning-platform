@@ -16,6 +16,8 @@ import CourseDescription from "./pages/coursedescription/CourseDescription";
 import PaymentSuccess from "./pages/paymentsuccess/PaymentSuccess";
 import Dashbord from "./pages/dashbord/Dashbord";
 import MyCourses from "./components/dashboard/MyCourses";
+import QuizGraphPlotter from "./components/dashboard/userStats";
+import Analytics from "./components/dashboard/analytics";
 
 import CourseStudy from "./pages/coursestudy/CourseStudy";
 import Lecture from "./pages/lecture/Lecture";
@@ -27,6 +29,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import VoiceModeController from './components/VoiceModeController';
 import FloatingChatbot from './components/ChatBot/FloatingChatbot';
 import ExternalRedirect from "./components/AiQuiz/AiQuiz";
+import QuizHistory from "./pages/dashbord/QuizHistory";
 
 const App = () => {
   const { isAuth, user, loading } = UserData();
@@ -69,8 +72,11 @@ const App = () => {
   element={isAuth ? <PaymentSuccess user={user} /> : <Login />}
 />
 
-            <Route path="/:id/dashboard" element={isAuth ? <Dashbord user={user} /> : <Login />}>
+            <Route path=":id/dashboard" element={isAuth ? <Dashbord user={user} /> : <Login />}>
               <Route path="my-courses" element={<MyCourses />} />
+              <Route path="quiz-history" element={<QuizHistory />} />
+              <Route path="quiz-analytics" element={<QuizGraphPlotter />} />
+              <Route path="user-analytics" element={<Analytics />} />
             </Route>
             
             <Route

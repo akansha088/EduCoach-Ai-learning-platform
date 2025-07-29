@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import sendMail, { sendForgotMail } from "../middlewares/sendMail.js";
 import TryCatch from "../middlewares/TryCatch.js";
 import { Quiz } from "../models/Quiz.js";
+import { QuizAttempt } from "../models/QuizAttempt.js";
 
 export const register = TryCatch(async (req, res) => {
   const { email, name, password } = req.body;
@@ -181,3 +182,89 @@ export const getCourseQuiz = TryCatch(async (req, res) => {
   });
 });
 
+// Submit a new quiz attempt
+export const submitQuizAttempt = async (req, res) => {
+  try {
+    const { quizId, responses, score, total } = req.body;
+    const userId = req.user._id;
+    // Always allow new attempts
+    const attempt = await QuizAttempt.create({
+      user: userId,
+      quiz: quizId,
+      responses,
+      score,
+      total,
+    });
+    res.status(201).json({ message: "Quiz submitted successfully", attempt });
+  } catch (error) {
+    console.error("Error submitting quiz attempt:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+// Update an existing quiz attempt
+export const updateQuizAttempt = async (req, res) => {
+  try {
+    const { attemptId } = req.params;
+    const { responses, score, total } = req.body;
+    const userId = req.user._id;
+    let attempt = await QuizAttempt.findOne({ _id: attemptId, user: userId });
+    if (!attempt) {
+      return res.status(404).json({ message: "Attempt not found" });
+    }
+    attempt.responses = responses;
+    attempt.score = score;
+    attempt.total = total;
+    await attempt.save();
+    res.status(200).json({ message: "Quiz attempt updated successfully", attempt });
+  } catch (error) {
+    console.error("Error updating quiz attempt:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+// Fetch a user's previous quiz attempt for a quiz
+export const getQuizAttempt = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { quizId } = req.query;
+    if (!quizId) {
+      return res.status(400).json({ message: "quizId is required" });
+    }
+    const attempt = await QuizAttempt.findOne({ user: userId, quiz: quizId });
+    res.status(200).json({ attempt });
+  } catch (error) {
+    console.error("Error fetching quiz attempt:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+// Fetch all quiz attempts for the logged-in user
+export const getAllQuizAttempts = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const attempts = await QuizAttempt.find({ user: userId })
+      .populate({ path: "quiz", select: "title", strictPopulate: false });
+
+    const validAttempts = attempts.filter(a => a.quiz && a.quiz.title);
+    
+    const totalAttempts = validAttempts.length;
+    const uniqueQuizIds = new Set(validAttempts.map(a => a.quiz._id.toString()));
+    const totalQuizzes = uniqueQuizIds.size;
+
+    const totalScore = validAttempts.reduce((sum, a) => sum + (a.score || 0), 0);
+    const totalMax = validAttempts.reduce((sum, a) => sum + (a.total || 0), 0);
+    const averageScore = totalMax > 0 ? ((totalScore / totalMax) * 100).toFixed(2) : 0;
+
+    res.status(200).json({
+      totalQuizzes,
+      totalAttempts,
+      averageScore: parseFloat(averageScore),
+      attempts: validAttempts, // still returning in case you want a table below
+    });
+  } catch (error) {
+    console.error("❌ Error in quiz analytics:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
