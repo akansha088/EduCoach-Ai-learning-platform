@@ -1,22 +1,187 @@
+/* About Component Styles - AI Learning Platform */
+
 .about {
-  padding: 80px 0;
+  min-height: 60vh;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.about::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+.about-content {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
+  border-radius: 20px;
+  padding: 4rem 3rem;
+  max-width: 800px;
+  width: 100%;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.3);
+  position: relative;
+  z-index: 1;
   text-align: center;
-  min-height: 55vh;
+  transform: translateY(0);
+  transition: all 0.3s ease;
+}
 
+.about-content:hover {
+  transform: translateY(-5px);
+  box-shadow: 
+    0 35px 70px -12px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.about-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  /* background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); */
+  border-radius: 2px;
+}
+
+.about-content h2 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.about-content p {
+  font-size: 1.25rem;
+  line-height: 1.8;
+  color: #4a5568;
+  font-weight: 400;
+  max-width: 700px;
+  margin: 0 auto;
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  text-align: left;
+  position: relative;
+}
+
+.about-content p::first-letter {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #4a5568;
+  float: left;
+  line-height: 1;
+  margin-right: 0.1rem;
+  margin-top: 0.1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .about {
+    padding: 1rem;
+  }
+  
   .about-content {
-    max-width: 800px;
-    margin: 0 auto;
+    padding: 3rem 2rem;
+    margin: 1rem;
+  }
+  
+  .about-content h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .about-content p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+  }
+}
 
-    h2 {
-      font-size: 32px;
-      color: #8a4baf;
-      margin-bottom: 20px;
-    }
+@media (max-width: 480px) {
+  .about-content {
+    padding: 2.5rem 1.5rem;
+  }
+  
+  .about-content h2 {
+    font-size: 2rem;
+  }
+  
+  .about-content p {
+    font-size: 1rem;
+    text-align: center;
+  }
+  
+  .about-content p::first-letter {
+    font-size: 1.4rem;
+  }
+}
 
-    p {
-      font-size: 16px;
-      color: #333;
-      line-height: 1.6;
-    }
+/* Animation */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Loading animation for the component */
+.about-content {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Accessibility improvements */
+.about-content:focus-within {
+  outline: 2px solid #667eea;
+  outline-offset: 4px;
+}
+
+/* Print styles */
+@media print {
+  .about {
+    background: white;
+    color: black;
+    min-height: auto;
+  }
+  
+  .about-content {
+    background: white;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+  
+  .about-content h2 {
+    color: black;
+    -webkit-text-fill-color: black;
   }
 }

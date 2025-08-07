@@ -44,14 +44,14 @@ const Header = ({ isAuth }) => {
         <div className="header-actions">
           {isAuth ? (
             <>
-              {/* Voice Assistant Button */}
+              {/* Voice Assistant Button
               <button 
                 className="action-btn voice-btn"
                 onClick={handleVoiceAssistant}
                 title="Voice Assistant"
               >
                 🎤
-              </button>
+              </button> */}
 
               {/* Profile Dropdown */}
               <div className="profile-dropdown">
